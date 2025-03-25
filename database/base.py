@@ -46,11 +46,3 @@ class AlchemyBaseModel(DeclarativeBase):
         if at_least_one_attached_attribute:
             return f"<{self.__class__.__name__}({', '.join(field_strings)})>"
         return f"<{self.__class__.__name__} {id(self)}>"
-
-
-class UserRelatedModel(AlchemyBaseModel):
-    """Родительский класс для моделей, связанных с моделю User."""
-
-    __abstract__ = True
-
-    user_id: Mapped[int]

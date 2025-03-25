@@ -1,18 +1,18 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 from sqlalchemy import BigInteger, Boolean, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database.base import UserRelatedModel
+from database.base import AlchemyBaseModel
 
-"""
-Реализовать роли
+
 if TYPE_CHECKING:
-    from database.models.roles import Role
-"""
+    from database.models.event import Event
+    # Реализовать роли
+    # from database.models.roles import Role
 
 
-class User(UserRelatedModel):
+class User(AlchemyBaseModel):
     """Модель для хранения информации о пользователе."""
 
     __tablename__ = "users"
@@ -37,6 +37,11 @@ class User(UserRelatedModel):
         nullable=False
     )
 
+    events: Mapped[list["Event"]] = relationship(
+        secondary="event",
+        lazy="selectin",
+    )
+
     # # Роли пользователя
     # roles: Mapped[list["Role"]] = relationship(
     #     secondary="users_to_roles",
@@ -44,8 +49,5 @@ class User(UserRelatedModel):
     # )
 
     @property
-    def short_info(self) -> str:
-        """Краткая информация о пользователе."""
-        return f"User(id={self.id}, login={self.login})"
-
-
+    def dict(self) -> Dict[str, any]:
+        return ...  # Доделать
