@@ -30,6 +30,11 @@ def get_orders(
         )
     return {"orders": [result.dict() for result in results]}
 
+@app.get("/users", response_model=GetUsersSchema)
+def get_users(
+    request: Request, limit: Optional[int] = None
+):
+    
 
 @app.post("/orders", status_code=status.HTTP_201_CREATED, response_model=GetOrderSchema)
 def create_order(request: Request, payload: CreateOrderSchema):

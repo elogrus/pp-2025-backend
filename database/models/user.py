@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Dict
 
-from sqlalchemy import BigInteger, Boolean, Integer, String
+from sqlalchemy import BigInteger, Boolean, Integer, String, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.base import AlchemyBaseModel
@@ -17,9 +17,9 @@ class User(AlchemyBaseModel):
 
     __tablename__ = "users"
 
-    # UUID?
-    id: Mapped[int] = mapped_column(
-        Integer,
+    # UUID!
+    id: Mapped[UUID] = mapped_column(
+        UUID,
         primary_key=True,
         autoincrement=True,
         unique=True,
@@ -33,7 +33,7 @@ class User(AlchemyBaseModel):
     )
 
     password: Mapped[str] = mapped_column(
-        String(64),
+        String(256),
         nullable=False
     )
 
@@ -43,7 +43,7 @@ class User(AlchemyBaseModel):
     )
 
     # # Роли пользователя
-    # roles: Mapped[list["Role"]] = relationship(
+    # role: Mapped[list["Role"]] = relationship(
     #     secondary="users_to_roles",
     #     lazy="selectin",
     # )

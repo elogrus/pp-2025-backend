@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING, Dict
 from sqlalchemy import BigInteger, Boolean, Integer, String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
-from database.base import UserRelatedModel
+from database.base import AlchemyBaseModel
 
 if TYPE_CHECKING:
     from database.models.user import User
 
 
-class Event(UserRelatedModel):
+class Event(AlchemyBaseModel):
     """Модель для хранения информации о пользователе."""
 
     __tablename__ = "events"
