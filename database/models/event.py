@@ -1,4 +1,5 @@
 import datetime
+import uuid
 from typing import TYPE_CHECKING, Dict
 
 from sqlalchemy import BigInteger, Boolean, Integer, String, DateTime
@@ -15,7 +16,6 @@ class Event(AlchemyBaseModel):
 
     __tablename__ = "events"
 
-    # UUID?
     id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
@@ -45,7 +45,7 @@ class Event(AlchemyBaseModel):
         nullable=False,
     )
 
-    creator: Mapped["User"] = relationship(
+    creator: Mapped[uuid.UUID] = relationship(
         secondary="user",
         lazy="selectin",
     )

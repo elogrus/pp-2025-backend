@@ -1,5 +1,5 @@
-from database.repository.base_repo import BaseRepository
+from database.repository.users import UserRepository
 
 __all__ = [
-    "BaseRepository",
+    "UserRepository",
 ]

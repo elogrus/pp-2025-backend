@@ -7,12 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from database.base import AlchemyBaseModel
 
 if TYPE_CHECKING:
-    from database.db_settings import DBSettings
+    from database.db_settings import db_settings, DBSettings
 
 
 __all__ = (
     "AlchemyBaseModel",
     "database_init",
+    "db_settings",
 )
 
 

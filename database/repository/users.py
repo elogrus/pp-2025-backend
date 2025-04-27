@@ -2,7 +2,7 @@ import uuid
 
 from loguru import logger
 import sqlalchemy as sa
-from database.repository import BaseRepository
+from database.repository.base_repo import BaseRepository
 from uuid import UUID
 from typing import Optional, Any
 from database.models import User
@@ -10,55 +10,76 @@ from database.models import User
 
 class UserRepository(BaseRepository):
 
-    async def create_user(self,
+    async def create_user(
+        self,
+        username: str,
         login: str,
-        password: str
+        __password: str
     ) -> None:
         """
         Создаёт в бд нового юзера.
 
-        :param login: логин юзера
-        :param password: пароль юзера
-        :return:
+        :param username: Никнейм юзера.
+        :param login: логин юзера.
+        :param __password: пароль юзера.
+        :return None:
         """
-        user_id = uuid.uuid4()
-        if (await self.get(user_id)) is None:
-            user = User(id=user_id, login=login, password=hash(password))
+        user_id = str(uuid.uuid4())
+        if (user := await self.get(user_id)) is None:
+            user = User(user_id=user_id, username=username, login=login, password=hash(__password))
             self._session.add(user)
+            await self.commit()
+            await self.refresh(user)
+            logger.info("Новый пользователь {user}", user=user)
+        elif user.should_be_updated(username):
+            ...  # обновить данные юзера или же выдать ошибку валидации, что уже существует такой юзер
 
-    async def get(self, user_id: UUID) -> "Optional[User]":
+    async def get(self, user_id: str) -> "Optional[User]":
         """
+        Возвращает пользователя.
 
-        :param user_id: Айдишник юзера в бд.
+        :param user_id: Айдишник пользователя в бд.
         :return: Модель User
         """
-        query = sa.select(User).where(User.id == user_id)
-        return await self._session.scalar(query)
+        query = sa.select(User).where(User.user_id == user_id)
+        return await self.scalar(query)
 
-    async def update(
+    async def update_username_to_db(
         self,
-        user_id: UUID,
-        **fields: Any,
+        user_id: str,
+        username: str,
     ) -> None:
-
-        query = sa.update(User).where(User.id == user_id).values(**fields)
-        await self._session.execute(query)
-        await self._session.flush()
-
-    async def is_has_any_role(
-        self,
-        user_id: UUID,
-        roles  # : "list[Union[RoleEnum, str]]",
-    ) -> bool:
         """
-        Имеет ли юзер хотя бы одну роль из переданных.
+        Сохраняет пользователя в базе данных.
 
-        :param user_id: ТГ Айди юзера.
-        :param roles: Список ролей.
-        :return: Тру или фэлс.
+        Если пользователь уже существует, то обновляет никнейм,
+
+        :param user_id: Айди юзера.
+        :param username: Имя пользователя.
         """
+
         if (user := await self.get(user_id)) is None:
-            return False
-        """Создать Enum ролей и дописать проверку"""
-        # role_names = [role.value if isinstance(role, Enum) else role for role in roles]
-        # return any(role.role in role_names for role in user.roles)
+            user.username = username
+
+        await self._session.flush() # Можно сделать валидацию данных перед коммитом
+        await self.commit()
+        await self.refresh(user)
+
+    # async def is_has_any_role(
+    #     self,
+    #     user_id: UUID,
+    #     roles  # : "list[Union[RoleEnum, str]]",
+    # ) -> bool:
+    #     """
+    #     Имеет ли юзер хотя бы одну роль из переданных.
+    #
+    #     :param user_id: ТГ Айди юзера.
+    #     :param roles: Список ролей.
+    #     :return: Тру или фэлс.
+    #     """
+    #     if (user := await self.get(user_id)) is None:
+    #         return False
+    #     """Создать Enum ролей и дописать проверку"""
+    #     # role_names = [role.value if isinstance(role, Enum) else role for role in roles]
+    #     # return any(role.role in role_names for role in user.roles)
+    #

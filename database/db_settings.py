@@ -14,3 +14,13 @@ class DBSettings(BaseModel):
     db: str
     user: str
     password: str
+
+
+db_settings = DBSettings(
+    host=os.environ["POSTGRES_HOST"],
+    host_port=int(os.environ["POSTGRES_HOST_PORT"]),
+    db=os.environ["POSTGRES_DB"],
+    user=os.environ["POSTGRES_USER"],
+    password=os.environ["POSTGRES_PASSWORD"],
+)
+

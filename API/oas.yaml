@@ -69,6 +69,60 @@ paths:
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
 
+  /users:
+    get:
+      parameters:
+      - name: cancelled
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+      summary: Returns a list of orders
+      operationId: getOrders
+      description: >
+        A list of orders made by the customer
+        sorted by date. Allows to filter orders
+        by range of dates.
+      responses:
+        '200':
+          description: A JSON array of orders
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GetOrderSchema'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+    post:
+      summary: Creates an order
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserSchema'
+      responses:
+        '201':
+          description: A JSON representation of the created order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderSchema'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
   /orders/{order_id}:
     parameters:
       - in: path
@@ -277,20 +331,20 @@ components:
           items:
             $ref: '#/components/schemas/OrderItemSchema'
 
-security:
-  - oauth2:
-      - getOrders
-      - createOrder
-      - getOrder
-      - updateOrder
-      - deleteOrder
-      - payOrder
-      - cancelOrder
-  - bearerAuth:
-      - getOrders
-      - createOrder
-      - getOrder
-      - updateOrder
-      - deleteOrder
-      - payOrder
-      - cancelOrder
+#security:
+#  - oauth2:
+#      - getOrders
+#      - createOrder
+#      - getOrder
+#      - updateOrder
+#      - deleteOrder
+#      - payOrder
+#      - cancelOrder
+#  - bearerAuth:
+#      - getOrders
+#      - createOrder
+#      - getOrder
+#      - updateOrder
+#      - deleteOrder
+#      - payOrder
+#      - cancelOrder

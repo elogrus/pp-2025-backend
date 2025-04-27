@@ -6,9 +6,22 @@ from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
 
+from API.api import GetUsersSchema, GetUserSchema
+from API.app import app
+from database.context import repository
+
+
+@app.get("/user/{id}", response_model=GetUserSchema)
+async def get_user(
+    user_id: str,
+):
+    async with repository() as repo:
+        return await repo.user.get(user_id)
+
+
+
 """
 Переделать под наш проект
-
 
 from orders.orders_service.exceptions import OrderNotFoundError
 from orders.orders_service.orders_service import OrdersService
@@ -16,6 +29,13 @@ from orders.repository.orders_repository import OrdersRepository
 from orders.repository.unit_of_work import UnitOfWork
 from orders.web.app import app
 from orders.web.api.schemas import GetOrderSchema, CreateOrderSchema, GetOrdersSchema
+
+
+На будущее: используй это
+Асинхронные запросы в бд вне репозиториев через репозитории :)
+    async def add_user(user_id: str, username: str):
+        async with repository() as repo:
+            await repo.user.update_username_to_db(user_id, username)
 
 
 @app.get("/orders", response_model=GetOrdersSchema)

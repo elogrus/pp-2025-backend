@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Dict
 
-from sqlalchemy import BigInteger, Boolean, Integer, String, UUID
+from sqlalchemy import BigInteger, Boolean, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.base import AlchemyBaseModel
@@ -18,12 +18,17 @@ class User(AlchemyBaseModel):
     __tablename__ = "users"
 
     # UUID!
-    id: Mapped[UUID] = mapped_column(
-        UUID,
+    user_id: Mapped[str] = mapped_column(
+        String,
         primary_key=True,
         autoincrement=True,
         unique=True,
         nullable=False,
+    )
+
+    username: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False
     )
 
     # Настроить рассылки на почту?
@@ -51,3 +56,12 @@ class User(AlchemyBaseModel):
     @property
     def dict(self) -> Dict[str, any]:
         return ...  # Доделать
+
+    def should_be_updated(self, username: str) -> bool:
+        """
+        Нужно ли обновить ему имя.
+
+        :param username: Никнейм пользователя в бд.
+        :return: Нужно ли поставить новый никнейм
+        """
+        return self.username != username

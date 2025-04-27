@@ -21,10 +21,9 @@ class Status(Enum):
     delivered = "delivered"
 
 
-
 class CreateEventSchema(BaseModel):
     title: str
-    description: str
+    description: Optional[str]
 
 
 class GetEventSchema(CreateEventSchema):
@@ -35,11 +34,11 @@ class GetEventSchema(CreateEventSchema):
     list_of_visitors: list
 
 
-class UserSchema(BaseModel):
+class GetUserSchema(BaseModel):
     id: UUID
     login: str
-    events: conlist(GetEventSchema)
-    role: str
+    events: Optional[conlist(GetEventSchema)]
+    role: Optional[str]
 
     """
     для валидации данных с помощью pydantic
