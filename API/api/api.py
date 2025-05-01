@@ -1,7 +1,8 @@
+import uuid
 from typing import Optional
 from uuid import UUID
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Body
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
@@ -9,14 +10,21 @@ from starlette.responses import Response
 from API.api import GetUsersSchema, GetUserSchema
 from API.app import app
 from database.context import repository
+from database.models import User
 
 
-@app.get("/user/{id}", response_model=GetUserSchema)
-async def get_user(
-    user_id: str,
-):
+@app.get("/user/{user_id}")
+async def get_user(user_id: str):
     async with repository() as repo:
-        return await repo.user.get(user_id)
+        print(await repo.user.get(user_id))
+        return list(await repo.user.get(user_id))
+
+
+@app.post("/users")
+async def create_person(data=Body()):
+    async with repository() as repo:
+        user = await repo.user.create_user(username=data["username"], login=data["login"], password=data["password"])
+    return list(user)
 
 
 

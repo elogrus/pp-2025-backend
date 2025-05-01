@@ -14,25 +14,26 @@ class UserRepository(BaseRepository):
         self,
         username: str,
         login: str,
-        __password: str
-    ) -> None:
+        password: str
+    ) -> User:
         """
         Создаёт в бд нового юзера.
 
         :param username: Никнейм юзера.
         :param login: логин юзера.
-        :param __password: пароль юзера.
+        :param password: пароль юзера.
         :return None:
         """
         user_id = str(uuid.uuid4())
-        if (user := await self.get(user_id)) is None:
-            user = User(user_id=user_id, username=username, login=login, password=hash(__password))
-            self._session.add(user)
-            await self.commit()
-            await self.refresh(user)
-            logger.info("Новый пользователь {user}", user=user)
-        elif user.should_be_updated(username):
-            ...  # обновить данные юзера или же выдать ошибку валидации, что уже существует такой юзер
+        # if (user := await self.get(user_id)) is None:
+        user = User(user_id=user_id, username=username, login=login, password=hash(password))
+        self._session.add(user)
+        await self.commit()
+        await self.refresh(user)
+        logger.info("Новый пользователь {user}", user=user)
+        # elif user.should_be_updated(username):
+            # ...  # обновить данные юзера или же выдать ошибку валидации, что уже существует такой юзер
+        return user
 
     async def get(self, user_id: str) -> "Optional[User]":
         """

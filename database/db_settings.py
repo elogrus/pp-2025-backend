@@ -17,10 +17,9 @@ class DBSettings(BaseModel):
 
 
 db_settings = DBSettings(
-    host=os.environ["POSTGRES_HOST"],
-    host_port=int(os.environ["POSTGRES_HOST_PORT"]),
-    db=os.environ["POSTGRES_DB"],
-    user=os.environ["POSTGRES_USER"],
-    password=os.environ["POSTGRES_PASSWORD"],
+    host="26.120.69.9",
+    host_port=int("5433"),
+    db="nvk_mero_db",
+    user="ZloyKobra",
+    password="333yKobra2007",
 )
-

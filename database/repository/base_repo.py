@@ -34,7 +34,7 @@ class BaseRepository(ABC):
         result = await self._session.scalars(query)
         return list(result.all())
 
-    async def scalars_multi(self, query: "Select[tuple[M, ...]]") -> Sequence[Row[_TP]]:
+    async def scalars_multi(self, query: "Select[tuple[M, ...]]"):
         """Для запросов, возвращающих несколько сущностей."""
         result = await self._session.execute(query)
         return result.all()  # list[tuple[...]]

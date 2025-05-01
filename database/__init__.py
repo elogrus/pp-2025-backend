@@ -18,7 +18,7 @@ __all__ = (
 
 
 @logger.catch(reraise=True)
-async def database_init(db_settings: "DBSettings") -> async_sessionmaker[AsyncSession]:
+async def database_init(db_setting: "DBSettings") -> async_sessionmaker[AsyncSession]:
     """
     Иницализация подключения к базе данных.
 
@@ -27,11 +27,11 @@ async def database_init(db_settings: "DBSettings") -> async_sessionmaker[AsyncSe
     """
     database_url = URL.create(
         drivername="postgresql+asyncpg",
-        username=db_settings.user,
-        password=db_settings.password,
-        host=db_settings.host,
-        port=db_settings.host_port,
-        database=db_settings.db,
+        username=db_setting.user,
+        password=db_setting.password,
+        host=db_setting.host,
+        port=db_setting.host_port,
+        database=db_setting.db,
     )
     async_engine = create_async_engine(database_url)
 

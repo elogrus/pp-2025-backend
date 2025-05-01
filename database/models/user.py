@@ -42,10 +42,10 @@ class User(AlchemyBaseModel):
         nullable=False
     )
 
-    events: Mapped[list["Event"]] = relationship(
-        secondary="event",
-        lazy="selectin",
-    )
+    # events: Mapped[list["Event"]] = relationship(
+    #     secondary="event",
+    #     lazy="selectin",
+    # )
 
     # # Роли пользователя
     # role: Mapped[list["Role"]] = relationship(
@@ -65,3 +65,4 @@ class User(AlchemyBaseModel):
         :return: Нужно ли поставить новый никнейм
         """
         return self.username != username
+

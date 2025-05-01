@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Orders API
-  description: API for WEB-applification PP
+  description: API for WEB-application PP
   version: 1.0.0
 
 servers:
@@ -14,7 +14,6 @@ servers:
     description: staging server for testing purposes only
 
 paths:
-  # Потей бэк, придумывай
   /events:
     get:
       parameters:
@@ -46,9 +45,9 @@ paths:
                   orders:
                     type: array
                     items:
-                      $ref: '#/components/schemas/GetOrderSchema'
+                      # $ref: '#/components/schemas/GetOrderSchema'
         '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+          # $ref: '#/components/responses/UnprocessableEntity'
 
     post:
       summary: Creates an order
@@ -58,16 +57,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateOrderSchema'
+              # $ref: '#/components/schemas/CreateOrderSchema'
       responses:
         '201':
           description: A JSON representation of the created order
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetOrderSchema'
+                # $ref: '#/components/schemas/GetOrderSchema'
         '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+          # $ref: '#/components/responses/UnprocessableEntity'
 
   /users:
     get:
@@ -100,9 +99,9 @@ paths:
                   orders:
                     type: array
                     items:
-                      $ref: '#/components/schemas/GetOrderSchema'
+                      # $ref: '#/components/schemas/GetOrderSchema'
         '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+          # $ref: '#/components/responses/UnprocessableEntity'
 
     post:
       summary: Creates an order
@@ -112,7 +111,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateUserSchema'
+              # $ref: '#/components/schemas/CreateUserSchema'
       responses:
         '201':
           description: A JSON representation of the created order
@@ -121,7 +120,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetOrderSchema'
         '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+          # $ref: '#/components/responses/UnprocessableEntity'
+
+  /user:
+    post:
+      summary: Creates an user
 
   /orders/{order_id}:
     parameters:
@@ -140,11 +143,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetOrderSchema'
+                # $ref: '#/components/schemas/GetOrderSchema'
         '404':
-          $ref: '#/components/responses/NotFound'
+          # $ref: '#/components/responses/NotFound'
         '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+          # $ref: '#/components/responses/UnprocessableEntity'
 
     put:
       summary: Replaces an existing order
@@ -154,18 +157,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateOrderSchema'
+              # $ref: '#/components/schemas/CreateOrderSchema'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref:  '#/components/schemas/GetOrderSchema'
+                # $ref: '#/components/schemas/GetOrderSchema'
         '404':
-          $ref: '#/components/responses/NotFound'
+          # $ref: '#/components/responses/NotFound'
         '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+          # $ref: '#/components/responses/UnprocessableEntity'
 
     delete:
       summary: Deletes an existing order
@@ -174,9 +177,9 @@ paths:
         '204':
           description: The resource was deleted successfully
         '404':
-          $ref: '#/components/responses/NotFound'
+          # $ref: '#/components/responses/NotFound'
         '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+          # $ref: '#/components/responses/UnprocessableEntity'
 
   /orders/{order_id}/pay:
     parameters:
@@ -195,11 +198,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetOrderSchema'
+                # $ref: '#/components/schemas/GetOrderSchema'
         '404':
-          $ref: '#/components/responses/NotFound'
+          # $ref: '#/components/responses/NotFound'
         '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+          # $ref: '#/components/responses/UnprocessableEntity'
 
 
   /orders/{order_id}/cancel:
@@ -219,11 +222,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetOrderSchema'
+                # $ref: '#/components/schemas/GetOrderSchema'
         '404':
-          $ref: '#/components/responses/NotFound'
+          # $ref: '#/components/responses/NotFound'
         '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+          # $ref: '#/components/responses/UnprocessableEntity'
 
 components:
   responses:
@@ -232,28 +235,28 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            # $ref: '#/components/schemas/Error'
     UnprocessableEntity:
       description: The payload contains invalid values.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            # $ref: '#/components/schemas/Error'
 
-  securitySchemes:
-    openId:
-      type: openIdConnect
-      openIdConnectUrl: https://coffeemesh-dev.eu.auth0.com/.well-known/openid-configuration
-    oauth2:
-      type: oauth2
-      flows:
-        clientCredentials:
-          tokenUrl: https://coffeemesh-dev.eu.auth0.com/oauth/token
-          scopes: {}
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+#  securitySchemes:
+#    openId:
+#      type: openIdConnect
+#      openIdConnectUrl: https://coffeemesh-dev.eu.auth0.com/.well-known/openid-configuration
+#    oauth2:
+#      type: oauth2
+#      flows:
+#        clientCredentials:
+#          tokenUrl: https://coffeemesh-dev.eu.auth0.com/oauth/token
+#          scopes: {}
+#    bearerAuth:
+#      type: http
+#      scheme: bearer
+#      bearerFormat: JWT
 
   schemas:
     Error:
@@ -299,7 +302,7 @@ components:
           type: array
           minItems: 1
           items:
-            $ref: '#/components/schemas/OrderItemSchema'
+            # $ref: '#/components/schemas/OrderItemSchema'
 
     GetOrderSchema:
       additionalProperties: false
@@ -329,7 +332,7 @@ components:
           type: array
           minItems: 1
           items:
-            $ref: '#/components/schemas/OrderItemSchema'
+            # $ref: '#/components/schemas/OrderItemSchema'
 
 #security:
 #  - oauth2:

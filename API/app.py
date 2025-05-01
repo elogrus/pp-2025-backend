@@ -22,11 +22,11 @@ from starlette.responses import Response, JSONResponse
 
 # from API.api.auth import decode_and_validate_token
 
-app = FastAPI(debug=True, openapi_url="/openapi/orders.json", docs_url="/docs/orders")
+app = FastAPI(debug=True, openapi_url="/openapi/orders.json", docs_url="/docs")
 
-oas_doc = yaml.safe_load((Path(__file__).parent / "oas.yaml").read_text())
+# oas_doc = yaml.safe_load((Path(__file__).parent / "oas.yaml").read_text())
 
-app.openapi = lambda: oas_doc
+# app.openapi = lambda: oas_doc
 
 
 # class AuthorizeRequestMiddleware(BaseHTTPMiddleware):
@@ -85,3 +85,5 @@ app.openapi = lambda: oas_doc
 # )
 
 from API.api import api
+
+# uvicorn API.app:app --reload

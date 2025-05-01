@@ -50,5 +50,5 @@ class GetUserSchema(BaseModel):
 
 
 class GetUsersSchema(BaseModel):
-    conlist(UserSchema)
+    conlist(GetUserSchema)
 
