@@ -21,10 +21,10 @@ async def get_user(user_id: str):
 
 
 @app.post("/users")
-async def create_person(data=Body()):
+async def create_user(data=Body()):
     async with repository() as repo:
         user = await repo.user.create_user(username=data["username"], login=data["login"], password=data["password"])
-    return list(user)
+    return user
 
 
 

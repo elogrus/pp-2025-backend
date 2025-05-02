@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from sqlalchemy import URL
+from sqlalchemy import URL, MetaData
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from database.base import AlchemyBaseModel
@@ -39,9 +39,16 @@ async def database_init(db_setting: "DBSettings") -> async_sessionmaker[AsyncSes
     async with async_engine.begin():
         pass
 
+    # Создание моделей в бд
+    async with async_engine.begin() as conn:
+        await conn.run_sync(AlchemyBaseModel.metadata.drop_all)
+        await conn.run_sync(AlchemyBaseModel.metadata.create_all)
+
     return async_sessionmaker(
         bind=async_engine,
         autoflush=False,
         future=True,
         expire_on_commit=False,
     )
+
+

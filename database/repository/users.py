@@ -24,9 +24,8 @@ class UserRepository(BaseRepository):
         :param password: пароль юзера.
         :return None:
         """
-        user_id = str(uuid.uuid4())
         # if (user := await self.get(user_id)) is None:
-        user = User(user_id=user_id, username=username, login=login, password=hash(password))
+        user = User(username=username, login=login, password=str(hash(password)))
         self._session.add(user)
         await self.commit()
         await self.refresh(user)

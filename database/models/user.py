@@ -17,9 +17,8 @@ class User(AlchemyBaseModel):
 
     __tablename__ = "users"
 
-    # UUID!
-    user_id: Mapped[str] = mapped_column(
-        String,
+    user_id: Mapped[int] = mapped_column(
+        Integer,
         primary_key=True,
         autoincrement=True,
         unique=True,
@@ -42,10 +41,19 @@ class User(AlchemyBaseModel):
         nullable=False
     )
 
-    # events: Mapped[list["Event"]] = relationship(
-    #     secondary="event",
-    #     lazy="selectin",
-    # )
+    created_events: Mapped[list["Event"]] = relationship(
+        "Event",
+        back_populates="creator",
+        lazy="selectin",
+    )
+
+    # События, на которые пользователь записался (многие-ко-многим)
+    visited_events: Mapped[list["Event"]] = relationship(
+        "Event",
+        secondary="event_visitors",
+        back_populates="list_of_visitors",
+        lazy="selectin",
+    )
 
     # # Роли пользователя
     # role: Mapped[list["Role"]] = relationship(

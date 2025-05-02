@@ -1,8 +1,7 @@
 import datetime
 import uuid
 from typing import TYPE_CHECKING, Dict
-
-from sqlalchemy import BigInteger, Boolean, Integer, String, DateTime
+from sqlalchemy import BigInteger, Boolean, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 from database.base import AlchemyBaseModel
@@ -45,8 +44,15 @@ class Event(AlchemyBaseModel):
         nullable=False,
     )
 
-    creator: Mapped[uuid.UUID] = relationship(
-        secondary="user",
+    creator_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.user_id"),
+        nullable=False,
+    )
+
+    creator: Mapped["User"] = relationship(
+        "User",
+        back_populates="created_events",
         lazy="selectin",
     )
 
@@ -56,9 +62,18 @@ class Event(AlchemyBaseModel):
     )
 
     list_of_visitors: Mapped[list["User"]] = relationship(
-        secondary='user',
-        lazy="selectin"
+        "User",
+        secondary="event_visitors",
+        back_populates="visited_events",
+        lazy="selectin",
     )
+
+    location: Mapped[str] = mapped_column(
+        String,
+        default="Улица Пушкина, дом Колотушкина",
+        nullable=False,
+    )
+
 
     @property
     def dict(self) -> Dict[str, any]:
