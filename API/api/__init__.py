@@ -1,6 +1,6 @@
-from API.api.schemas import GetUserSchema, GetUsersSchema
+from API.api.schemas import UserCreateRequest, EventCreateRequest
 
 __all__ = [
-    "GetUserSchema",
-    "GetUsersSchema",
+    "UserCreateRequest",
+    "EventCreateRequest",
 ]

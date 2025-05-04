@@ -23,3 +23,13 @@ db_settings = DBSettings(
     user="ZloyKobra",
     password="333yKobra2007",
 )
+
+"""
+db_settings = DBSettings(
+    host=os.environ["POSTGRESQL_HOST"],
+    host_port=int(os.environ["POSTGRESQL_HOST_PORT"]),
+    db=os.environ["POSTGRESQL_DB"],
+    user=os.environ["POSTGRESQL_USER"],
+    password=os.environ["POSTGRESQL_PASSWORD"],
+)
+"""

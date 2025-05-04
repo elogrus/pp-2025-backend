@@ -1,4 +1,3 @@
-import datetime
 import uuid
 from typing import TYPE_CHECKING, Dict
 from sqlalchemy import BigInteger, Boolean, Integer, String, DateTime, ForeignKey
@@ -11,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class Event(AlchemyBaseModel):
-    """Модель для хранения информации о пользователе."""
+    """Модель для хранения информации о мероприятиях."""
 
     __tablename__ = "events"
 
@@ -74,8 +73,6 @@ class Event(AlchemyBaseModel):
         nullable=False,
     )
 
-
-    @property
     def dict(self) -> Dict[str, any]:
         return {
             "id": self.id,

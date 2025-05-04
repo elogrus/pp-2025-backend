@@ -1,31 +1,115 @@
-import uuid
-from typing import Optional
-from uuid import UUID
-
-from fastapi import HTTPException, Body
+from fastapi import HTTPException, Body, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
 
-from API.api import GetUsersSchema, GetUserSchema
+from API.api.auth import get_current_user, Token, validate_token, create_tokens, \
+    authenticate_user, pwd_context
+from API.api import UserCreateRequest, EventCreateRequest
+from API.api.schemas import UserRequest
 from API.app import app
-from database.context import repository
+from database.context import repository, repository_manager
 from database.models import User
+from database.repository.repository import Repository
+
+"""
+На будущее: всегда используй это
+Асинхронные запросы в бд вне репозиториев через репозитории :)
+    @app.get("/user/{user_id}")
+    async def get_user(user_id: int, repo: Repository = Depends(repository)):
+        return (await repo.user.get(user_id)).dict()
+"""
+
+"""{"username": "Bimbim", "login": "Bimbim@mail.ru", "password": "bimbim"}"""
+@app.post("/users", response_model=UserRequest)
+async def create_user(user_data: UserCreateRequest, repo: Repository = Depends(repository)):
+    user = await repo.user.create_user(username=user_data.username,
+                                       login=user_data.login,
+                                       password=pwd_context.hash(user_data.password), )
+    return user.dict()
 
 
 @app.get("/user/{user_id}")
-async def get_user(user_id: str):
-    async with repository() as repo:
-        print(await repo.user.get(user_id))
-        return list(await repo.user.get(user_id))
+async def get_user(user_id: int, repo: Repository = Depends(repository)):
+    return (await repo.user.get(user_id)).dict()
 
 
-@app.post("/users")
-async def create_user(data=Body()):
-    async with repository() as repo:
-        user = await repo.user.create_user(username=data["username"], login=data["login"], password=data["password"])
-    return user
+@app.get("/user/{limit}")
+async def get_users_by_limit(limit: int, repo: Repository = Depends(repository)):
+    users = (await repo.user.get_by_limit(limit))
+    return [user.dict() for user in users]
 
+
+@app.post("/events", response_model=EventCreateRequest)
+async def create_event(event_data: EventCreateRequest,
+                       current_user: User = Depends(get_current_user),
+                       repo: Repository = Depends(repository)):
+    event = await repo.event.create_event(user=current_user,
+                                          title=event_data["title"],
+                                          date=event_data["date"],
+                                          limit_visitors=event_data["limit_visitors"],
+                                          location=event_data["location"],
+                                          )
+    return event.dict()
+
+
+@app.get("/event/{event_id}")
+async def get_event(event_id: int, repo: Repository = Depends(repository)):
+    return (await repo.event.get(event_id)).dict()
+
+
+@app.get("/event/{event_title}")
+async def get_event_by_title(event_title: str, repo: Repository = Depends(repository)):
+    events = await repo.event.get_by_title(event_title)
+    return [event.dict() for event in events]
+
+
+@app.post("/auth/login", response_model=Token)
+async def login(
+        form_data: OAuth2PasswordRequestForm = Depends(),
+        repo: Repository = Depends(repository)
+):
+    # Аутентификация пользователя
+    user = await authenticate_user(form_data.username, form_data.password, repo)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+        )
+
+    # Создаем токены
+    access_token, refresh_token = create_tokens(user.login)
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
+
+
+@app.post("/auth/refresh", response_model=Token)
+async def refresh_token(
+        refresh_token: str = Body(..., embed=True),
+        repo: Repository = Depends(repository)
+):
+    # Валидация refresh токена
+    token_data = await validate_token(refresh_token, is_refresh=True)
+    user = await repo.user.get_by_login(login=token_data.login)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Генерация новых токенов
+    new_access, new_refresh = create_tokens(user.login)
+    return {
+        "access_token": new_access,
+        "refresh_token": new_refresh,
+        "token_type": "bearer"
+    }
+
+
+@app.get("/users/me")
+async def read_current_user(current_user: User = Depends(get_current_user)):
+    return current_user.dict()
 
 
 """
@@ -37,13 +121,6 @@ from orders.repository.orders_repository import OrdersRepository
 from orders.repository.unit_of_work import UnitOfWork
 from orders.web.app import app
 from orders.web.api.schemas import GetOrderSchema, CreateOrderSchema, GetOrdersSchema
-
-
-На будущее: используй это
-Асинхронные запросы в бд вне репозиториев через репозитории :)
-    async def add_user(user_id: str, username: str):
-        async with repository() as repo:
-            await repo.user.update_username_to_db(user_id, username)
 
 
 @app.get("/orders", response_model=GetOrdersSchema)

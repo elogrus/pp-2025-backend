@@ -1,7 +1,26 @@
-def main():
-    # Запуск всего
-    print('3,2,1 Пуск!')
+import uvicorn as uvicorn
+
+
+def run_api(
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    reload: bool = True,
+    workers: int = 1
+):
+    """Запуск FastAPI приложения через Uvicorn"""
+    uvicorn.run(
+        "API.app:app",
+        host=host,
+        port=port,
+        reload=reload,
+        workers=workers,
+    )
+
 
 if __name__ == "__main__":
-    create_tables()
-
+    """Поехали!"""
+    run_api(
+        host="127.0.0.1",
+        port=8000,
+        reload=True
+    )

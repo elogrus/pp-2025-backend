@@ -37,7 +37,7 @@ class User(AlchemyBaseModel):
     )
 
     password: Mapped[str] = mapped_column(
-        String(256),
+        String,
         nullable=False
     )
 
@@ -61,9 +61,14 @@ class User(AlchemyBaseModel):
     #     lazy="selectin",
     # )
 
-    @property
     def dict(self) -> Dict[str, any]:
-        return ...  # Доделать
+        return {
+            "user_id": self.user_id,
+            "username": self.username,
+            "login": self.login,
+            "created_events": self.created_events,
+            "visited_events": self.visited_events,
+        }
 
     def should_be_updated(self, username: str) -> bool:
         """

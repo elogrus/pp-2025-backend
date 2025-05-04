@@ -1,10 +1,8 @@
-import uuid
-
 from loguru import logger
 import sqlalchemy as sa
+
 from database.repository.base_repo import BaseRepository
-from uuid import UUID
-from typing import Optional, Any
+from typing import Optional, List
 from database.models import User
 
 
@@ -22,19 +20,16 @@ class UserRepository(BaseRepository):
         :param username: Никнейм юзера.
         :param login: логин юзера.
         :param password: пароль юзера.
-        :return None:
+        :return User: модель User.
         """
-        # if (user := await self.get(user_id)) is None:
-        user = User(username=username, login=login, password=str(hash(password)))
+        user = User(username=username, login=login, password=password)
         self._session.add(user)
         await self.commit()
         await self.refresh(user)
         logger.info("Новый пользователь {user}", user=user)
-        # elif user.should_be_updated(username):
-            # ...  # обновить данные юзера или же выдать ошибку валидации, что уже существует такой юзер
         return user
 
-    async def get(self, user_id: str) -> "Optional[User]":
+    async def get(self, user_id: int) -> Optional[User]:
         """
         Возвращает пользователя.
 
@@ -44,9 +39,19 @@ class UserRepository(BaseRepository):
         query = sa.select(User).where(User.user_id == user_id)
         return await self.scalar(query)
 
+    async def get_by_limit(self, limit: int) -> Optional[List[User]]:
+        """
+        Позже сделать перегрузки этой функции для фильтрации запросов в бд.
+        Возвращает первые limit юзеров из бд
+        :param limit:
+        :return List[User] | None:
+        """
+        query = sa.select(User).limit(limit)
+        return await self.scalars(query)
+
     async def update_username_to_db(
         self,
-        user_id: str,
+        user_id: int,
         username: str,
     ) -> None:
         """
@@ -61,13 +66,23 @@ class UserRepository(BaseRepository):
         if (user := await self.get(user_id)) is None:
             user.username = username
 
-        await self._session.flush() # Можно сделать валидацию данных перед коммитом
+        await self._session.flush()  # Можно сделать валидацию данных перед коммитом
         await self.commit()
         await self.refresh(user)
 
+    async def get_by_login(self, login: str) -> User:
+        """
+        Получить юзера по логину.
+        :param login: Логин юзера
+        :return User: Модель юзера
+        """
+        query = sa.select(User).where(User.login == login)
+        return await self.scalar(query)
+
+
     # async def is_has_any_role(
     #     self,
-    #     user_id: UUID,
+    #     user_id: int,
     #     roles  # : "list[Union[RoleEnum, str]]",
     # ) -> bool:
     #     """
@@ -79,7 +94,7 @@ class UserRepository(BaseRepository):
     #     """
     #     if (user := await self.get(user_id)) is None:
     #         return False
-    #     """Создать Enum ролей и дописать проверку"""
+    #     """Создать Enum ролей и переписать проверку"""
     #     # role_names = [role.value if isinstance(role, Enum) else role for role in roles]
     #     # return any(role.role in role_names for role in user.roles)
     #

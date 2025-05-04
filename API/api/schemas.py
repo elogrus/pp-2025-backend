@@ -34,11 +34,9 @@ class GetEventSchema(CreateEventSchema):
     list_of_visitors: list
 
 
-class GetUserSchema(BaseModel):
-    id: UUID
+class UserRequest(BaseModel):
+    username: str
     login: str
-    events: Optional[conlist(GetEventSchema)]
-    role: Optional[str]
 
     """
     для валидации данных с помощью pydantic
@@ -49,6 +47,13 @@ class GetUserSchema(BaseModel):
     """
 
 
-class GetUsersSchema(BaseModel):
-    conlist(GetUserSchema)
+class UserCreateRequest(UserRequest):
+    password: str
+
+
+class EventCreateRequest(BaseModel):
+    title: str
+    date: datetime
+    limit_visitors: int
+    location: str
 
