@@ -34,6 +34,7 @@ async def database_init(db_setting: "DBSettings") -> async_sessionmaker[AsyncSes
     )
     async_engine = create_async_engine(
         database_url,
+        echo=True,
     )
 
     # Проверка подключения к базе данных

@@ -81,7 +81,8 @@ class Event(AlchemyBaseModel):
             # тип/категория,
             "created": self.created,
             "date": self.date,
-            "creator": self.creator,
+            "creator_id": self.creator_id,
+            "location": self.location,
             "limit_visitors": self.limit_visitors,
             "list_of_visitors": [visitor.dict() for visitor in self.list_of_visitors]
         }

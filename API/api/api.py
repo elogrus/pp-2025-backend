@@ -6,8 +6,7 @@ from starlette.responses import Response
 
 from API.api.auth import get_current_user, Token, validate_token, create_tokens, \
     authenticate_user, pwd_context
-from API.api import UserCreateRequest, EventCreateRequest
-from API.api.schemas import UserRequest
+from API.api import UserCreateRequest, EventCreateRequest, UserRequest, EventCreateDescription
 from API.app import app
 from database.context import repository, repository_manager
 from database.models import User
@@ -26,7 +25,7 @@ from database.repository.repository import Repository
 async def create_user(user_data: UserCreateRequest, repo: Repository = Depends(repository)):
     user = await repo.user.create_user(username=user_data.username,
                                        login=user_data.login,
-                                       password=pwd_context.hash(user_data.password), )
+                                       password=pwd_context.hash(user_data.password))
     return user.dict()
 
 
@@ -42,14 +41,15 @@ async def get_users_by_limit(limit: int, repo: Repository = Depends(repository))
 
 
 @app.post("/events", response_model=EventCreateRequest)
-async def create_event(event_data: EventCreateRequest,
+async def create_event(event_data: EventCreateDescription,
                        current_user: User = Depends(get_current_user),
                        repo: Repository = Depends(repository)):
-    event = await repo.event.create_event(user=current_user,
-                                          title=event_data["title"],
-                                          date=event_data["date"],
-                                          limit_visitors=event_data["limit_visitors"],
-                                          location=event_data["location"],
+    event = await repo.event.create_event(creator=current_user,
+                                          title=event_data.title,
+                                          description=event_data.description,
+                                          date=event_data.date,
+                                          limit_visitors=event_data.limit_visitors,
+                                          location=event_data.location,
                                           )
     return event.dict()
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 import sqlalchemy as sa
 from database.models import Event, User
@@ -9,7 +9,7 @@ class EventRepository(BaseRepository):
 
     async def create_event(
             self,
-            user: User,
+            creator: User,
             title: str,
             date: datetime,
             limit_visitors: int,
@@ -18,7 +18,7 @@ class EventRepository(BaseRepository):
     ) -> Event:
         """
         Создаёт новый ивент в бд.
-        :param user: Модель юзера, который создаёт ивент.
+        :param creator: Модель юзера, который создаёт ивент.
         :param title: Краткое описание/Титульник.
         :param date: Время начала.
         :param limit_visitors: Лимит посетителей.
@@ -26,10 +26,15 @@ class EventRepository(BaseRepository):
         :param description: Полное описание.
         :return Event: Модель ивента.
         """
-        event = Event(title=title.lower(),
-                      description=description.lower(),
+        if date.tzinfo is not None:
+            date = date.replace(tzinfo=None)
+
+        event = Event(title=title,
+                      description=description,
                       date=date,
-                      creator=user.user_id,
+                      created=datetime.utcnow().replace(tzinfo=None),
+                      creator=creator,
+                      creator_id=creator.user_id,
                       limit_visitors=limit_visitors,
                       location=location.lower()
                       )

@@ -35,19 +35,19 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
-def create_tokens(username: str) -> Tuple[str, str]:
+def create_tokens(login: str) -> Tuple[str, str]:
     """Создает access и refresh токены"""
     access_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
     access_token = jwt.encode(
-        {"sub": username, "type": "access", "exp": datetime.utcnow() + access_expires},
+        {"sub": login, "type": "access", "exp": datetime.utcnow() + access_expires},
         SECRET_KEY,
         algorithm=ALGORITHM
     )
 
     refresh_token = jwt.encode(
-        {"sub": username, "type": "refresh", "exp": datetime.utcnow() + refresh_expires},
+        {"sub": login, "type": "refresh", "exp": datetime.utcnow() + refresh_expires},
         REFRESH_SECRET_KEY,
         algorithm=ALGORITHM
     )
@@ -66,15 +66,14 @@ async def validate_token(token: str, is_refresh: bool = False):
     try:
         secret = REFRESH_SECRET_KEY if is_refresh else SECRET_KEY
         payload = jwt.decode(token, secret, algorithms=[ALGORITHM])
-
         if payload.get("type") != ("refresh" if is_refresh else "access"):
             raise credentials_exception
 
-        username: str = payload.get("sub")
-        if username is None:
+        login: str = payload.get("sub")
+        if login is None:
             raise credentials_exception
 
-        return TokenData(username=username)
+        return TokenData(login=login)
     except JWTError:
         raise credentials_exception
 
@@ -85,7 +84,7 @@ async def get_current_user(
 ):
     """Получение текущего пользователя по access токену"""
     token_data = await validate_token(token)
-    user = await repo.user.get_by_login(login=token_data.username)
+    user = await repo.user.get_by_login(login=token_data.login)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user

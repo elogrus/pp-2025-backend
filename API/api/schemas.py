@@ -57,3 +57,6 @@ class EventCreateRequest(BaseModel):
     limit_visitors: int
     location: str
 
+
+class EventCreateDescription(EventCreateRequest):
+    description: Optional[str]
