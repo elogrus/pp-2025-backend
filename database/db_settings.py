@@ -15,7 +15,6 @@ class DBSettings(BaseModel):
     user: str
     password: str
 
-
 db_settings = DBSettings(
     host=os.environ["POSTGRESQL_HOST"],
     host_port=int(os.environ["POSTGRESQL_HOST_PORT"]),
