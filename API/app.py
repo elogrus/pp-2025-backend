@@ -3,6 +3,7 @@ from pathlib import Path
 
 import yaml
 from fastapi import FastAPI
+
 # from jwt import (
 #     ExpiredSignatureError,
 #     ImmatureSignatureError,
@@ -18,12 +19,18 @@ from starlette.middleware.base import RequestResponseEndpoint, BaseHTTPMiddlewar
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
-
+from fastapi.middleware.cors import CORSMiddleware
 
 # from API.api.auth import decode_and_validate_token
 
 app = FastAPI(debug=True, openapi_url="/openapi/orders.json", docs_url="/docs")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # oas_doc = yaml.safe_load((Path(__file__).parent / "oas.yaml").read_text())
 
 # app.openapi = lambda: oas_doc
@@ -51,32 +58,32 @@ app = FastAPI(debug=True, openapi_url="/openapi/orders.json", docs_url="/docs")
 #                     "body": "Missing access token",
 #                 },
 #             )
-        #try:
-            # auth_token = bearer_token.split(" ")[1].strip()
-        # token_payload = decode_and_validate_token(auth_token)
-        # except (
-        #     ExpiredSignatureError,
-        #     ImmatureSignatureError,
-        #     InvalidAlgorithmError,
-        #     InvalidAudienceError,
-        #     InvalidKeyError,
-        #     InvalidSignatureError,
-        #     InvalidTokenError,
-        #     MissingRequiredClaimError,
-        # ) as error:
-        #     return JSONResponse(
-        #         status_code=status.HTTP_401_UNAUTHORIZED,
-        #         content={"detail": str(error), "body": str(error)},
-        #    )
-        # else:
-            # request.state.user_id = token_payload["sub"]
-        #return await call_next(request)
+# try:
+# auth_token = bearer_token.split(" ")[1].strip()
+# token_payload = decode_and_validate_token(auth_token)
+# except (
+#     ExpiredSignatureError,
+#     ImmatureSignatureError,
+#     InvalidAlgorithmError,
+#     InvalidAudienceError,
+#     InvalidKeyError,
+#     InvalidSignatureError,
+#     InvalidTokenError,
+#     MissingRequiredClaimError,
+# ) as error:
+#     return JSONResponse(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         content={"detail": str(error), "body": str(error)},
+#    )
+# else:
+# request.state.user_id = token_payload["sub"]
+# return await call_next(request)
 
 
-#app.add_middleware(AuthorizeRequestMiddleware)
+# app.add_middleware(AuthorizeRequestMiddleware)
 
 
-#app.add_middleware(
+# app.add_middleware(
 #     CORSMiddleware,
 #     allow_origins=["*"],
 #     allow_credentials=True,
