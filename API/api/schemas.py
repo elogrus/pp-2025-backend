@@ -60,3 +60,8 @@ class EventCreateRequest(BaseModel):
 
 class EventCreateDescription(EventCreateRequest):
     description: Optional[str]
+
+
+class OAuth2PasswordRequestSchema(BaseModel):
+    login: str
+    password: str

@@ -1,14 +1,16 @@
-from fastapi import HTTPException, Body, Depends
+from datetime import timedelta
+
+from fastapi import HTTPException, Body, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
+from jose import jwt, JWTError
 from starlette import status
 from starlette.requests import Request
-from starlette.responses import Response
 
 from API.api.auth import get_current_user, Token, validate_token, create_tokens, \
-    authenticate_user, pwd_context
+    authenticate_user, pwd_context, REFRESH_SECRET_KEY, ALGORITHM
 from API.api import UserCreateRequest, EventCreateRequest, UserRequest, EventCreateDescription
 from API.app import app
-from database.context import repository, repository_manager
+from database.context import repository
 from database.models import User
 from database.repository.repository import Repository
 
@@ -20,7 +22,7 @@ from database.repository.repository import Repository
         return (await repo.user.get(user_id)).dict()
 """
 
-"""{"username": "Bimbim", "login": "Bimbim@mail.ru", "password": "bimbim"}"""
+
 @app.post("/users", response_model=UserRequest)
 async def create_user(user_data: UserCreateRequest, repo: Repository = Depends(repository)):
     user = await repo.user.create_user(username=user_data.username,
@@ -67,6 +69,7 @@ async def get_event_by_title(event_title: str, repo: Repository = Depends(reposi
 
 @app.post("/auth/login", response_model=Token)
 async def login(
+        response: Response,
         form_data: OAuth2PasswordRequestForm = Depends(),
         repo: Repository = Depends(repository)
 ):
@@ -80,31 +83,51 @@ async def login(
 
     # Создаем токены
     access_token, refresh_token = create_tokens(user.login)
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,  # Только для HTTPS
+        samesite="lax",
+        max_age=int(timedelta(days=30).total_seconds()),
+        path="/auth/refresh"
+    )
+
     return {
         "access_token": access_token,
-        "refresh_token": refresh_token,
         "token_type": "bearer"
     }
 
 
 @app.post("/auth/refresh", response_model=Token)
 async def refresh_token(
-        refresh_token: str = Body(..., embed=True),
+        request: Request,
         repo: Repository = Depends(repository)
 ):
     # Валидация refresh токена
-    token_data = await validate_token(refresh_token, is_refresh=True)
-    user = await repo.user.get_by_login(login=token_data.login)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token is missing"
+        )
+    try:
+        payload = jwt.decode(refresh_token, REFRESH_SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if not username:
+            raise HTTPException(status_code=400, detail="Invalid token payload")
 
-    # Генерация новых токенов
-    new_access, new_refresh = create_tokens(user.login)
-    return {
-        "access_token": new_access,
-        "refresh_token": new_refresh,
-        "token_type": "bearer"
-    }
+        user = await repo.user.get_by_login(username)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        new_access_token = create_tokens(user.login)[0]
+        return {"access_token": new_access_token, "token_type": "bearer"}
+
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
 
 
 @app.get("/users/me")

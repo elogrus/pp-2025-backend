@@ -22,7 +22,6 @@ REFRESH_TOKEN_EXPIRE_DAYS = 7     # Долгое время жизни refresh �
 # Схемы
 class Token(BaseModel):
     access_token: str
-    refresh_token: str
     token_type: str
 
 
