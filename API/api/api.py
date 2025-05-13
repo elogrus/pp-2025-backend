@@ -56,6 +56,12 @@ async def create_event(event_data: EventCreateDescription,
     return event.dict()
 
 
+@app.get("/events")
+async def get_all_events(repo: Repository = Depends(repository)):
+    events = await repo.event.get_all()
+    return events
+
+
 @app.get("/event/{event_id}")
 async def get_event(event_id: int, repo: Repository = Depends(repository)):
     return (await repo.event.get(event_id)).dict()

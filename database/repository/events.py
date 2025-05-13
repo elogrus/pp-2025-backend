@@ -52,6 +52,14 @@ class EventRepository(BaseRepository):
         query = sa.select(Event).where(Event.id == event_id)
         return await self.scalar(query)
 
+    async def get_all(self) -> List[Event]:
+        """
+        Получить все существующие ивенты из бд
+        :return List[Event]: Список с ивентами.
+        """
+        query = sa.select(Event)
+        return await self.scalars(query)
+
     async def get_by_title(self, event_title) -> List[Event]:
         """
         Получить все ивент из бд по краткому описанию/титульнику.
