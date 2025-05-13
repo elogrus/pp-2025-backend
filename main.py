@@ -1,5 +1,7 @@
 import uvicorn as uvicorn
+from dotenv import load_dotenv
 
+load_dotenv()
 
 def run_api(
     host: str = "127.0.0.1",
@@ -12,7 +14,7 @@ def run_api(
         "API.app:app",
         host=host,
         port=port,
-        reload=reload,
+        reload=reload, 
         workers=workers,
     )
 
