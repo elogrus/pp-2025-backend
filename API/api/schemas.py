@@ -51,6 +51,17 @@ class UserCreateRequest(UserRequest):
     password: str
 
 
+class EventResponse(BaseModel):
+    id: int
+    title: str
+    description: Optional[str]
+    date: datetime
+    created: datetime
+    creator_id: int
+    limit_visitors: int
+    location: str
+
+
 class EventCreateRequest(BaseModel):
     title: str
     date: datetime

@@ -8,7 +8,8 @@ from starlette.requests import Request
 
 from API.api.auth import get_current_user, Token, validate_token, create_tokens, \
     authenticate_user, pwd_context, REFRESH_SECRET_KEY, ALGORITHM
-from API.api import UserCreateRequest, EventCreateRequest, UserRequest, EventCreateDescription
+from API.api import UserCreateRequest, EventCreateRequest, UserRequest, \
+    EventCreateDescription, EventResponse
 from API.app import app
 from database.context import repository
 from database.models import User
@@ -42,7 +43,7 @@ async def get_users_by_limit(limit: int, repo: Repository = Depends(repository))
     return [user.dict() for user in users]
 
 
-@app.post("/events", response_model=EventCreateRequest)
+@app.post("/events", response_model=EventResponse)
 async def create_event(event_data: EventCreateDescription,
                        current_user: User = Depends(get_current_user),
                        repo: Repository = Depends(repository)):
