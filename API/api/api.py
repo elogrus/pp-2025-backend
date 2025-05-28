@@ -1,18 +1,19 @@
 from datetime import timedelta
 
-from fastapi import HTTPException, Body, Depends, Response
+from fastapi import HTTPException, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from starlette import status
 from starlette.requests import Request
 
-from API.api.auth import get_current_user, Token, validate_token, create_tokens, \
+from API.api.auth import get_current_user, Token, create_tokens, \
     authenticate_user, pwd_context, REFRESH_SECRET_KEY, ALGORITHM
-from API.api import UserCreateRequest, EventCreateRequest, UserRequest, \
+from API.api import UserCreateRequest, UserRequest, \
     EventCreateDescription, EventResponse
 from API.app import app
 from database.context import repository
 from database.models import User
+from database.models.safe_user import SafeUser
 from database.repository.repository import Repository
 
 """
@@ -26,8 +27,9 @@ from database.repository.repository import Repository
 
 @app.post("/users", response_model=UserRequest)
 async def create_user(user_data: UserCreateRequest, repo: Repository = Depends(repository)):
+    # потом сделать проверку на уже наличие такого пользователя.
     user = await repo.user.create_user(username=user_data.username,
-                                       login=user_data.login,
+                                       nickname=user_data.nickname,
                                        password=pwd_context.hash(user_data.password))
     return user.dict()
 
@@ -45,7 +47,7 @@ async def get_users_by_limit(limit: int, repo: Repository = Depends(repository))
 
 @app.post("/events", response_model=EventResponse)
 async def create_event(event_data: EventCreateDescription,
-                       current_user: User = Depends(get_current_user),
+                       current_user: SafeUser = Depends(get_current_user),
                        repo: Repository = Depends(repository)):
     event = await repo.event.create_event(creator=current_user,
                                           title=event_data.title,
@@ -65,7 +67,8 @@ async def get_all_events(repo: Repository = Depends(repository)):
 
 @app.get("/event/{event_id}")
 async def get_event(event_id: int, repo: Repository = Depends(repository)):
-    return (await repo.event.get(event_id)).dict()
+    event = await repo.event.get(event_id)
+    return event.dict()
 
 
 @app.get("/event/{event_title}")
@@ -89,7 +92,7 @@ async def login(
         )
 
     # Создаем токены
-    access_token, refresh_token = create_tokens(user.login)
+    access_token, refresh_token = create_tokens(user.username)
 
     response.set_cookie(
         key="refresh_token",
@@ -125,21 +128,64 @@ async def refresh_token(
         if not username:
             raise HTTPException(status_code=400, detail="Invalid token payload")
 
-        user = await repo.user.get_by_login(username)
+        user = await repo.user.get_safe_user_by_username(username)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        new_access_token = create_tokens(user.login)[0]
+        new_access_token = create_tokens(user.username)[0]
         return {"access_token": new_access_token, "token_type": "bearer"}
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
 
-
 @app.get("/users/me")
-async def read_current_user(current_user: User = Depends(get_current_user)):
+async def read_current_user(current_user: SafeUser = Depends(get_current_user)):
     return current_user.dict()
+
+
+@app.get("/event/{event_id}/sign_up")
+async def sign_up_on_event(event_id: int,
+                           current_user: SafeUser = Depends(get_current_user),
+                           repo: Repository = Depends(repository)):
+    event = await repo.event.get(event_id)
+
+    # Проверяем, не записан ли уже пользователь
+    if current_user in event.visitors:
+        raise HTTPException(400, "User already signed up")
+
+    # Проверяем лимит участников
+    if len(event.visitors) >= event.limit_visitors:
+        raise HTTPException(400, "Event is full")
+
+    event.visitors.append(current_user)
+    await repo.commit()
+
+    return {"message": "Successfully signed up"}
+
+
+@app.get("/event/{event_id}/sign_out")
+async def sign_out_from_event(event_id: int,
+                              current_user: SafeUser = Depends(get_current_user),
+                              repo: Repository = Depends(repository)):
+    event = await repo.event.get(event_id)
+    # Проверяем, не записан ли уже пользователь
+    if current_user not in event.visitors:
+        raise HTTPException(400, "User already signed out")
+
+    event.limit_visitors -= 1
+    event.visitors.remove(current_user)
+    await repo.commit()
+
+    return {"message": "Successfully signed out"}
+
+
+
+@app.get("/event/{event_id}/visitors")
+async def check_visitors(event_id: int,
+                         repo: Repository = Depends(repository)):
+    event = await repo.event.get(event_id)
+    return event.visitors
 
 
 """

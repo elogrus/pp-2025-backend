@@ -1,9 +1,10 @@
 from loguru import logger
 import sqlalchemy as sa
+from sqlalchemy import select
 
 from database.repository.base_repo import BaseRepository
 from typing import Optional, List
-from database.models import User
+from database.models import User, SafeUser
 
 
 class UserRepository(BaseRepository):
@@ -11,48 +12,53 @@ class UserRepository(BaseRepository):
     async def create_user(
         self,
         username: str,
-        login: str,
+        nickname: str,
         password: str
-    ) -> User:
+    ) -> SafeUser:
         """
         Создаёт в бд нового юзера.
 
-        :param username: Никнейм юзера.
-        :param login: логин юзера.
+        :param username: Логин юзера.
+        :param nickname: Никнейм юзера.
         :param password: пароль юзера.
         :return User: модель User.
         """
-        user = User(username=username, login=login, password=password)
+        user = User(username=username, nickname=nickname, password=password)
         self._session.add(user)
         await self.commit()
         await self.refresh(user)
+        safe_user = SafeUser(username=username, nickname=nickname)
+        safe_user.user_id = user.user_id
         logger.info("Новый пользователь {user}", user=user)
-        return user
+        self._session.add(safe_user)
+        await self.commit()
+        await self.refresh(safe_user)
+        return safe_user
 
-    async def get(self, user_id: int) -> Optional[User]:
+    async def get(self, user_id: int) -> Optional[SafeUser]:
         """
         Возвращает пользователя.
 
         :param user_id: Айдишник пользователя в бд.
         :return: Модель User
         """
-        query = sa.select(User).where(User.user_id == user_id)
+        query = sa.select(SafeUser).where(SafeUser.user_id == user_id)
         return await self.scalar(query)
 
-    async def get_by_limit(self, limit: int) -> Optional[List[User]]:
+    async def get_by_limit(self, limit: int) -> Optional[List[SafeUser]]:
         """
         Позже сделать перегрузки этой функции для фильтрации запросов в бд.
         Возвращает первые limit юзеров из бд
         :param limit:
         :return List[User] | None:
         """
-        query = sa.select(User).limit(limit)
+        query = sa.select(SafeUser).limit(limit)
         return await self.scalars(query)
 
     async def update_username_to_db(
         self,
         user_id: int,
-        username: str,
+        nickname: str,
     ) -> None:
         """
         Сохраняет пользователя в базе данных.
@@ -60,23 +66,35 @@ class UserRepository(BaseRepository):
         Если пользователь уже существует, то обновляет никнейм,
 
         :param user_id: Айди юзера.
-        :param username: Имя пользователя.
+        :param nickname: Имя пользователя.
         """
 
-        if (user := await self.get(user_id)) is None:
-            user.username = username
-
+        if (safe_user := await self.get(user_id)) is None:
+            safe_user.nickname = nickname
+        query = sa.select(User).where(User.user_id == user_id)
+        user = await self.scalar(query)
+        user.nickname = nickname
         await self._session.flush()  # Можно сделать валидацию данных перед коммитом
         await self.commit()
+        await self.refresh(safe_user)
         await self.refresh(user)
 
-    async def get_by_login(self, login: str) -> User:
+    async def get_user_by_username(self, username: str) -> User:
         """
-        Получить юзера по логину.
-        :param login: Логин юзера
+        Получить юзера по username, пользоваться только при авторизации!
+        :param username: Username юзера
         :return User: Модель юзера
         """
-        query = sa.select(User).where(User.login == login)
+        query = sa.select(User).where(User.username == username)
+        return await self.scalar(query)
+
+    async def get_safe_user_by_username(self, username: str) -> SafeUser:
+        """
+        Получить юзера по username.
+        :param username: Username юзера
+        :return SafeUser: Модель безопасного юзера
+        """
+        query = sa.select(SafeUser).where(SafeUser.username == username)
         return await self.scalar(query)
 
 

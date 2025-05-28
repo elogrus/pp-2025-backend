@@ -6,19 +6,19 @@ from uuid import UUID
 from pydantic import BaseModel, Extra, conint, conlist, field_validator
 
 
-class Size(Enum):
-    small = "small"
-    medium = "medium"
-    big = "big"
+class Role(Enum):
+    admin = "admin"
+    user = "user"
+    manager = "manager"
 
 
-class Status(Enum):
+class StatusEvent(Enum):
     created = "created"
-    paid = "paid"
-    progress = "progress"
-    cancelled = "cancelled"
-    dispatched = "dispatched"
-    delivered = "delivered"
+    on_approval = "on_approval"
+    confirmed = "confirmed"
+    rejected = "rejected"
+    finished = "finished"
+    in_progress = "in_progress"
 
 
 class CreateEventSchema(BaseModel):
@@ -36,7 +36,7 @@ class GetEventSchema(CreateEventSchema):
 
 class UserRequest(BaseModel):
     username: str
-    login: str
+    nickname: str
 
     """
     для валидации данных с помощью pydantic

@@ -18,7 +18,7 @@ class EventVisitor(AlchemyBaseModel):
 
     user_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("users.user_id"),
+        ForeignKey("safe_users.user_id"),
         primary_key=True,
     )
 

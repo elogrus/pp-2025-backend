@@ -7,6 +7,7 @@ from database.base import AlchemyBaseModel
 
 if TYPE_CHECKING:
     from database.models.user import User
+    from database.models.safe_user import SafeUser
 
 
 class Event(AlchemyBaseModel):
@@ -45,12 +46,12 @@ class Event(AlchemyBaseModel):
 
     creator_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("users.user_id"),
+        ForeignKey("safe_users.user_id"),
         nullable=False,
     )
 
-    creator: Mapped["User"] = relationship(
-        "User",
+    creator: Mapped["SafeUser"] = relationship(
+        "SafeUser",
         back_populates="created_events",
         lazy="selectin",
     )
@@ -60,8 +61,8 @@ class Event(AlchemyBaseModel):
         nullable=False,
     )
 
-    list_of_visitors: Mapped[list["User"]] = relationship(
-        "User",
+    visitors: Mapped[list["SafeUser"]] = relationship(
+        "SafeUser",
         secondary="event_visitors",
         back_populates="visited_events",
         lazy="selectin",
@@ -84,5 +85,5 @@ class Event(AlchemyBaseModel):
             "creator_id": self.creator_id,
             "location": self.location,
             "limit_visitors": self.limit_visitors,
-            "list_of_visitors": [visitor.dict() for visitor in self.list_of_visitors]
+            "list_of_visitors": [visitor.safe_dict() for visitor in self.visitors]
         }

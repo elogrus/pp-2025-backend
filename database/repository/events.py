@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional, List
 import sqlalchemy as sa
-from database.models import Event, User
+from database.models import Event, SafeUser
 from database.repository.base_repo import BaseRepository
 
 
@@ -9,7 +9,7 @@ class EventRepository(BaseRepository):
 
     async def create_event(
             self,
-            creator: User,
+            creator: SafeUser,
             title: str,
             date: datetime,
             limit_visitors: int,

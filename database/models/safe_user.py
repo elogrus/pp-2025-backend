@@ -1,32 +1,32 @@
 from typing import TYPE_CHECKING, Dict
 
-from sqlalchemy import BigInteger, Boolean, Integer, String
+from sqlalchemy import BigInteger, Boolean, Integer, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.base import AlchemyBaseModel
 
 
-# if TYPE_CHECKING:
+if TYPE_CHECKING:
+    from database.models.event import Event
     # Реализовать роли
     # from database.models.roles import Role
 
 
-class User(AlchemyBaseModel):
+class SafeUser(AlchemyBaseModel):
     """Модель для хранения информации о пользователе."""
 
-    __tablename__ = "users"
+    __tablename__ = "safe_users"
 
     user_id: Mapped[int] = mapped_column(
         Integer,
+        ForeignKey("users.user_id"),
         primary_key=True,
-        autoincrement=True,
         unique=True,
-        nullable=False,
     )
 
+    # Это логин!
     username: Mapped[str] = mapped_column(
-        String(64),
-        unique=True,
+        String,
         nullable=False,
     )
 
@@ -35,9 +35,18 @@ class User(AlchemyBaseModel):
         nullable=False,
     )
 
-    password: Mapped[str] = mapped_column(
-        String,
-        nullable=False
+    created_events: Mapped[list["Event"]] = relationship(
+        "Event",
+        back_populates="creator",
+        lazy="selectin",
+    )
+
+    # События, на которые пользователь записался (многие-ко-многим)
+    visited_events: Mapped[list["Event"]] = relationship(
+        "Event",
+        secondary="event_visitors",
+        back_populates="visitors",
+        lazy="selectin",
     )
 
     # # Роли пользователя
@@ -50,6 +59,9 @@ class User(AlchemyBaseModel):
         return {
             "user_id": self.user_id,
             "username": self.username,
+            "nickname": self.nickname,
+            "created_events": self.created_events,
+            "visited_events": self.visited_events,
         }
 
     def should_be_updated(self, username: str) -> bool:
