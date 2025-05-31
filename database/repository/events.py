@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from typing import Optional, List
 import sqlalchemy as sa
+
+from database.enums import Status
 from database.models import Event, SafeUser
 from database.repository.base_repo import BaseRepository
 
@@ -35,6 +37,7 @@ class EventRepository(BaseRepository):
                       created=datetime.utcnow().replace(tzinfo=None),
                       creator=creator,
                       creator_id=creator.user_id,
+                      status=Status.in_review,
                       limit_visitors=limit_visitors,
                       location=location.lower()
                       )
@@ -68,5 +71,4 @@ class EventRepository(BaseRepository):
         """
         query = sa.select(Event).filter(Event.title.like(f"%{event_title.lower()}%")).all()
         return list(await self.scalars(query))
-
 

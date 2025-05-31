@@ -9,10 +9,11 @@ from starlette.requests import Request
 from API.api.auth import get_current_user, Token, create_tokens, \
     authenticate_user, pwd_context, REFRESH_SECRET_KEY, ALGORITHM
 from API.api import UserCreateRequest, UserRequest, \
-    EventCreateDescription, EventResponse
+    EventCreateDescription, EventResponse, StatusSchema, EditEventSchema, \
+    AdminEditEventSchema
 from API.app import app
 from database.context import repository
-from database.models import User
+from database.enums import Status, Role
 from database.models.safe_user import SafeUser
 from database.repository.repository import Repository
 
@@ -25,7 +26,15 @@ from database.repository.repository import Repository
 """
 
 
-@app.post("/users", response_model=UserRequest)
+@app.get("/")
+async def i_am_teapot():
+    raise HTTPException(
+        418,
+        detail="I'm teapot and you are teapot"
+    )
+
+
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=UserRequest)
 async def create_user(user_data: UserCreateRequest, repo: Repository = Depends(repository)):
     # потом сделать проверку на уже наличие такого пользователя.
     user = await repo.user.create_user(username=user_data.username,
@@ -39,13 +48,13 @@ async def get_user(user_id: int, repo: Repository = Depends(repository)):
     return (await repo.user.get(user_id)).dict()
 
 
-@app.get("/user/{limit}")
-async def get_users_by_limit(limit: int, repo: Repository = Depends(repository)):
-    users = (await repo.user.get_by_limit(limit))
+@app.get("/users")
+async def get_all_users(repo: Repository = Depends(repository)):
+    users = (await repo.user.get_all())
     return [user.dict() for user in users]
 
 
-@app.post("/events", response_model=EventResponse)
+@app.post("/events", status_code=status.HTTP_201_CREATED, response_model=EventResponse)
 async def create_event(event_data: EventCreateDescription,
                        current_user: SafeUser = Depends(get_current_user),
                        repo: Repository = Depends(repository)):
@@ -65,9 +74,23 @@ async def get_all_events(repo: Repository = Depends(repository)):
     return events
 
 
-@app.get("/event/{event_id}")
+@app.get("/event/{event_id}", response_model=EventResponse)
 async def get_event(event_id: int, repo: Repository = Depends(repository)):
     event = await repo.event.get(event_id)
+    if not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Event not found"
+        )
+    if event.status == Status.deleted:
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="Event was deleted",
+            headers={
+                "message": "Event was deleted",
+                "event": event.dict()
+            },
+        )
     return event.dict()
 
 
@@ -144,11 +167,28 @@ async def read_current_user(current_user: SafeUser = Depends(get_current_user)):
     return current_user.dict()
 
 
-@app.get("/event/{event_id}/sign_up")
+@app.put("/user/{user_id}/role")
+async def edit_role(user_id: int,
+                    current_user: SafeUser = Depends(get_current_user),
+                    repo: Repository = Depends(repository)):
+    if current_user.role != Role.main_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough rights",
+        )
+
+
+@app.put("/event/{event_id}/sign_up")
 async def sign_up_on_event(event_id: int,
                            current_user: SafeUser = Depends(get_current_user),
                            repo: Repository = Depends(repository)):
     event = await repo.event.get(event_id)
+
+    if current_user.user_id == event.creator_id:
+        raise HTTPException(
+            status_code=400,
+            detail="The user is the organizer of the event"
+        )
 
     # Проверяем, не записан ли уже пользователь
     if current_user in event.visitors:
@@ -164,7 +204,7 @@ async def sign_up_on_event(event_id: int,
     return {"message": "Successfully signed up"}
 
 
-@app.get("/event/{event_id}/sign_out")
+@app.put("/event/{event_id}/sign_out")
 async def sign_out_from_event(event_id: int,
                               current_user: SafeUser = Depends(get_current_user),
                               repo: Repository = Depends(repository)):
@@ -173,12 +213,10 @@ async def sign_out_from_event(event_id: int,
     if current_user not in event.visitors:
         raise HTTPException(400, "User already signed out")
 
-    event.limit_visitors -= 1
     event.visitors.remove(current_user)
     await repo.commit()
 
     return {"message": "Successfully signed out"}
-
 
 
 @app.get("/event/{event_id}/visitors")
@@ -188,65 +226,81 @@ async def check_visitors(event_id: int,
     return event.visitors
 
 
-"""
-Переделать под наш проект
-
-from orders.orders_service.exceptions import OrderNotFoundError
-from orders.orders_service.orders_service import OrdersService
-from orders.repository.orders_repository import OrdersRepository
-from orders.repository.unit_of_work import UnitOfWork
-from orders.web.app import app
-from orders.web.api.schemas import GetOrderSchema, CreateOrderSchema, GetOrdersSchema
-
-
-@app.get("/orders", response_model=GetOrdersSchema)
-def get_orders(
-    request: Request, cancelled: Optional[bool] = None, limit: Optional[int] = None
-):
-    with UnitOfWork() as unit_of_work:
-        repo = OrdersRepository(unit_of_work.session)
-        orders_service = OrdersService(repo)
-        results = orders_service.list_orders(
-            limit=limit, cancelled=cancelled, user_id=request.state.user_id
-        )
-    return {"orders": [result.dict() for result in results]}
-
-@app.get("/users", response_model=GetUsersSchema)
-def get_users(
-    request: Request, limit: Optional[int] = None
-):
-    
-
-@app.post("/orders", status_code=status.HTTP_201_CREATED, response_model=GetOrderSchema)
-def create_order(request: Request, payload: CreateOrderSchema):
-    with UnitOfWork() as unit_of_work:
-        repo = OrdersRepository(unit_of_work.session)
-        orders_service = OrdersService(repo)
-        order = payload.dict()["order"]
-        for item in order:
-            item["size"] = item["size"].value
-        order = orders_service.place_order(order, request.state.user_id)
-        unit_of_work.commit()
-        return_payload = order.dict()
-    return return_payload
-
-
-@app.get("/orders/{order_id}", response_model=GetOrderSchema)
-def get_order(request: Request, order_id: UUID):
-    try:
-        with UnitOfWork() as unit_of_work:
-            repo = OrdersRepository(unit_of_work.session)
-            orders_service = OrdersService(repo)
-            order = orders_service.get_order(
-                order_id=order_id, user_id=request.state.user_id
-            )
-        return order.dict()
-    except OrderNotFoundError:
+@app.put("/event/{event_id}/status")
+async def update_status_event(event_id: int,
+                              data: StatusSchema,
+                              current_user: SafeUser = Depends(get_current_user),
+                              repo: Repository = Depends(repository)):
+    event = await repo.event.get(event_id)
+    if current_user.role not in Role.admins:
         raise HTTPException(
-            status_code=404, detail=f"Order with ID {order_id} not found"
+            status_code=403,
+            detail="The user is not an admin"
         )
+    match data.verdict:
+        case Status.rejected:
+            event.status = Status.rejected
+        case Status.approved:
+            event.status = Status.approved
+        case Status.deleted:
+            event.status = Status.deleted
+        case Status.finished:
+            event.status = Status.finished
 
 
+@app.put("/event/{event_id}/edit")
+async def edit_event(event_id: int,
+                     data: EditEventSchema,
+                     current_user: SafeUser = Depends(get_current_user),
+                     repo: Repository = Depends(repository)):
+    event = await repo.event.get(event_id)
+    if event.creator_id != current_user.user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="The user is not the creator of this event"
+        )
+    if data.title:
+        event.title = data.title
+    if data.description:
+        event.description = data.description
+    if data.date:
+        event.date = data.date
+    if data.limit_visitors:
+        event.limit_visitors = data.limit_visitors
+    if data.location:
+        event.location = data.location
+    await repo.commit()
+    return {"message": "Edited successfully "}
+
+
+@app.put("/event/{event_id}/admin_edit")
+async def admin_edit_event(event_id: int,
+                           data: AdminEditEventSchema,
+                           current_user: SafeUser = Depends(get_current_user),
+                           repo: Repository = Depends(repository)):
+    event = await repo.event.get(event_id)
+    if current_user.role not in Role.admins:
+        raise HTTPException(
+            status_code=403,
+            detail="The user is not an admin"
+        )
+    if data.title:
+        event.title = data.title
+    if data.description:
+        event.description = data.description
+    if data.date:
+        event.date = data.date
+    if data.limit_visitors:
+        event.limit_visitors = data.limit_visitors
+    if data.location:
+        event.location = data.location
+    if data.status:
+        event.status = data.status
+    await repo.commit()
+    return {"message": "Edited successfully "}
+
+
+"""
 @app.put("/orders/{order_id}", response_model=GetOrderSchema)
 def update_order(request: Request, order_id: UUID, order_details: CreateOrderSchema):
     try:

@@ -8,8 +8,6 @@ from database.base import AlchemyBaseModel
 
 if TYPE_CHECKING:
     from database.models.event import Event
-    # Реализовать роли
-    # from database.models.roles import Role
 
 
 class SafeUser(AlchemyBaseModel):
@@ -35,6 +33,12 @@ class SafeUser(AlchemyBaseModel):
         nullable=False,
     )
 
+    # Роли пользователя
+    role: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False
+    )
+
     created_events: Mapped[list["Event"]] = relationship(
         "Event",
         back_populates="creator",
@@ -49,27 +53,20 @@ class SafeUser(AlchemyBaseModel):
         lazy="selectin",
     )
 
-    # # Роли пользователя
-    # role: Mapped[list["Role"]] = relationship(
-    #     secondary="users_to_roles",
-    #     lazy="selectin",
-    # )
-
     def dict(self) -> Dict[str, any]:
         return {
             "user_id": self.user_id,
             "username": self.username,
             "nickname": self.nickname,
+            "role": self.role,
             "created_events": self.created_events,
             "visited_events": self.visited_events,
         }
 
-    def should_be_updated(self, username: str) -> bool:
-        """
-        Нужно ли обновить ему имя.
-
-        :param username: Никнейм пользователя в бд.
-        :return: Нужно ли поставить новый никнейм
-        """
-        return self.username != username
-
+    def dict_for_event(self) -> Dict[str, any]:
+        return {
+            "user_id": self.user_id,
+            "username": self.username,
+            "nickname": self.nickname,
+            "role": self.role,
+        }

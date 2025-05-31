@@ -1,14 +1,9 @@
-from typing import TYPE_CHECKING, Dict
+from typing import Dict
 
-from sqlalchemy import BigInteger, Boolean, Integer, String
+from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.base import AlchemyBaseModel
-
-
-# if TYPE_CHECKING:
-    # Реализовать роли
-    # from database.models.roles import Role
 
 
 class User(AlchemyBaseModel):
@@ -40,16 +35,17 @@ class User(AlchemyBaseModel):
         nullable=False
     )
 
-    # # Роли пользователя
-    # role: Mapped[list["Role"]] = relationship(
-    #     secondary="users_to_roles",
-    #     lazy="selectin",
-    # )
+    # Роли пользователя
+    role: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False
+    )
 
     def dict(self) -> Dict[str, any]:
         return {
             "user_id": self.user_id,
             "username": self.username,
+            "role": self.role,
         }
 
     def should_be_updated(self, username: str) -> bool:

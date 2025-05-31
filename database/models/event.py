@@ -1,12 +1,11 @@
-import uuid
 from typing import TYPE_CHECKING, Dict
-from sqlalchemy import BigInteger, Boolean, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
+
 from database.base import AlchemyBaseModel
 
 if TYPE_CHECKING:
-    from database.models.user import User
     from database.models.safe_user import SafeUser
 
 
@@ -56,6 +55,11 @@ class Event(AlchemyBaseModel):
         lazy="selectin",
     )
 
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+    )
+
     limit_visitors: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
@@ -85,5 +89,5 @@ class Event(AlchemyBaseModel):
             "creator_id": self.creator_id,
             "location": self.location,
             "limit_visitors": self.limit_visitors,
-            "list_of_visitors": [visitor.safe_dict() for visitor in self.visitors]
+            "list_of_visitors": [visitor.dict_for_event() for visitor in self.visitors]
         }

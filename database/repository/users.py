@@ -2,6 +2,7 @@ from loguru import logger
 import sqlalchemy as sa
 from sqlalchemy import select
 
+from database.enums import Role
 from database.repository.base_repo import BaseRepository
 from typing import Optional, List
 from database.models import User, SafeUser
@@ -23,11 +24,11 @@ class UserRepository(BaseRepository):
         :param password: пароль юзера.
         :return User: модель User.
         """
-        user = User(username=username, nickname=nickname, password=password)
+        user = User(username=username, nickname=nickname, password=password, role=Role.user)
         self._session.add(user)
         await self.commit()
         await self.refresh(user)
-        safe_user = SafeUser(username=username, nickname=nickname)
+        safe_user = SafeUser(username=username, nickname=nickname, role=Role.user)
         safe_user.user_id = user.user_id
         logger.info("Новый пользователь {user}", user=user)
         self._session.add(safe_user)
@@ -40,22 +41,21 @@ class UserRepository(BaseRepository):
         Возвращает пользователя.
 
         :param user_id: Айдишник пользователя в бд.
-        :return: Модель User
+        :return: Модель SafeUser
         """
         query = sa.select(SafeUser).where(SafeUser.user_id == user_id)
         return await self.scalar(query)
 
-    async def get_by_limit(self, limit: int) -> Optional[List[SafeUser]]:
+    async def get_all(self) -> Optional[List[SafeUser]]:
         """
         Позже сделать перегрузки этой функции для фильтрации запросов в бд.
-        Возвращает первые limit юзеров из бд
-        :param limit:
+        Возвращает всех юзеров из бд
         :return List[User] | None:
         """
-        query = sa.select(SafeUser).limit(limit)
+        query = sa.select(SafeUser)
         return await self.scalars(query)
 
-    async def update_username_to_db(
+    async def update_nickname_to_db(
         self,
         user_id: int,
         nickname: str,

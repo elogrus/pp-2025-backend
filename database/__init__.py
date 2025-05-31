@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from sqlalchemy import URL, MetaData, NullPool
+from sqlalchemy import URL
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from database.base import AlchemyBaseModel
@@ -17,7 +17,7 @@ __all__ = (
 
 
 @logger.catch(reraise=True)
-async def database_init(db_setting: "DBSettings") -> async_sessionmaker[AsyncSession]:
+async def database_init(db_settings: "DBSettings") -> async_sessionmaker[AsyncSession]:
     """
     Иницализация подключения к базе данных.
 
@@ -26,11 +26,11 @@ async def database_init(db_setting: "DBSettings") -> async_sessionmaker[AsyncSes
     """
     database_url = URL.create(
         drivername="postgresql+asyncpg",
-        username=db_setting.user,
-        password=db_setting.password,
-        host=db_setting.host,
-        port=db_setting.host_port,
-        database=db_setting.db,
+        username=db_settings.user,
+        password=db_settings.password,
+        host=db_settings.host,
+        port=db_settings.host_port,
+        database=db_settings.db,
     )
     async_engine = create_async_engine(
         database_url,

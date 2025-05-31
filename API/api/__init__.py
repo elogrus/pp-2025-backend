@@ -1,5 +1,6 @@
 from API.api.schemas import UserCreateRequest, EventCreateRequest, \
-    EventCreateDescription, UserRequest, OAuth2PasswordRequestSchema, EventResponse
+    EventCreateDescription, UserRequest, OAuth2PasswordRequestSchema, EventResponse, \
+    StatusSchema, EditEventSchema, AdminEditEventSchema
 
 __all__ = [
     "UserCreateRequest",
@@ -8,4 +9,7 @@ __all__ = [
     "UserRequest",
     "OAuth2PasswordRequestSchema",
     "EventResponse",
+    "StatusSchema",
+    "EditEventSchema",
+    "AdminEditEventSchema",
 ]

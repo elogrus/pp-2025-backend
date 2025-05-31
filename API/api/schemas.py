@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Extra, conint, conlist, field_validator
 
+from database.models import User
+
 
 class Role(Enum):
     admin = "admin"
@@ -71,6 +73,22 @@ class EventCreateRequest(BaseModel):
 
 class EventCreateDescription(EventCreateRequest):
     description: Optional[str]
+
+
+class StatusSchema(BaseModel):
+    verdict: str
+
+
+class EditEventSchema(BaseModel):
+    title: Optional[str]
+    description: Optional[str]
+    date: Optional[datetime]
+    limit_visitors: Optional[int]
+    location: Optional[str]
+
+
+class AdminEditEventSchema(EditEventSchema):
+    status: Optional[str]
 
 
 class OAuth2PasswordRequestSchema(BaseModel):
